@@ -103,7 +103,7 @@ class IssuesController < ApplicationController
     @allowed_statuses = @issue.new_statuses_allowed_to(User.current)
     @edit_allowed = User.current.allowed_to?(:edit_issues, @project)
     @priorities = Enumeration.priorities
-    @time_entry = TimeEntry.new
+    @time_entry = @issue.time_entry_in_progress(User.current) || TimeEntry.new
     respond_to do |format|
       format.html { render :template => 'issues/show.rhtml' }
       format.atom { render :action => 'changes', :layout => false, :content_type => 'application/atom+xml' }
@@ -178,7 +178,10 @@ class IssuesController < ApplicationController
     end
 
     if request.post?
-      @time_entry = TimeEntry.new(:project => @project, :issue => @issue, :user => User.current, :spent_on => Date.today)
+      @time_entry = TimeEntry.find_by_id(params[:time_entry][:id]) if params[:time_entry]
+      @time_entry ||= TimeEntry.new(:project => @project, :issue => @issue, 
+              :user => User.current, :spent_on => Date.today)
+
       @time_entry.attributes = params[:time_entry]
       attachments = attach_files(@issue, params[:attachments])
       attachments.each {|a| journal.details << JournalDetail.new(:property => 'attachment', :prop_key => a.id, :value => a.filename)}

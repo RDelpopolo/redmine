@@ -196,4 +196,11 @@ module IssuesHelper
     export.rewind
     export
   end
+  
+  def spent_hours(issue)
+    return '-' if issue.time_entries.empty?
+    spent_hours = l_hours(issue.spent_hours)
+    spent_hours += " (#{l(:text_in_progress)})" if issue.time_entry_in_progress
+    link_to spent_hours, {:controller => 'timelog', :action => 'details', :project_id => issue.project, :issue_id => issue}, :class => 'icon icon-time'
+  end
 end

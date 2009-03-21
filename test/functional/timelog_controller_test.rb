@@ -62,6 +62,28 @@ class TimelogControllerTest < Test::Unit::TestCase
                                  :content => 'Development'
   end
   
+  def test_get_edit_in_progress_by_entry_id
+    @request.session[:user_id] = 1 #to avoid 'no permission' error
+    get :edit, :id => time_entries(:time_entry_in_progress)
+    assert_response :success
+    assert_equal 'time_entry_end_time', assigns(:activate_field)
+  end
+  
+  def test_get_edit_not_in_progress
+    @request.session[:user_id] = 2 #there are no in-progress entries of this user for the issue
+    get :edit, :issue_id => 1
+    assert_response :success
+    assert_equal 'time_entry_start_time', assigns(:activate_field)
+  end
+  
+  def test_get_edit_in_progress_by_issue_id
+    user_id = 1
+    @request.session[:user_id] = user_id #there is in-progress entry of this user for the issue
+    issue_id = 1
+    get :edit, :issue_id => issue_id
+    assert_redirected_to :action => "edit", :id => Issue.find(issue_id).time_entry_in_progress(User.find(user_id)).id
+  end
+  
   def test_get_edit_existing_time
     @request.session[:user_id] = 2
     get :edit, :id => 2, :project_id => nil
@@ -103,6 +125,7 @@ class TimelogControllerTest < Test::Unit::TestCase
     post :edit, :id => 1,
                 :time_entry => {:issue_id => '2',
                                 :hours => '8'}
+    assert_no_errors(assigns(:time_entry))
     assert_redirected_to :action => 'details', :project_id => 'ecookbook'
     entry.reload
     
@@ -273,7 +296,7 @@ class TimelogControllerTest < Test::Unit::TestCase
     assert_response :success
     assert_template 'details'
     assert_not_nil assigns(:entries)
-    assert_equal 4, assigns(:entries).size
+    assert_equal 6, assigns(:entries).size
     # project and subproject
     assert_equal [1, 3], assigns(:entries).collect(&:project_id).uniq.sort
     assert_not_nil assigns(:total_hours)
@@ -288,7 +311,7 @@ class TimelogControllerTest < Test::Unit::TestCase
     assert_response :success
     assert_template 'details'
     assert_not_nil assigns(:entries)
-    assert_equal 3, assigns(:entries).size
+    assert_equal 5, assigns(:entries).size
     assert_not_nil assigns(:total_hours)
     assert_equal "12.90", "%.2f" % assigns(:total_hours)
     assert_equal '2007-03-20'.to_date, assigns(:from)
@@ -327,7 +350,7 @@ class TimelogControllerTest < Test::Unit::TestCase
     assert_response :success
     assert_template 'details'
     assert_not_nil assigns(:entries)
-    assert_equal 2, assigns(:entries).size
+    assert_equal 4, assigns(:entries).size
     assert_not_nil assigns(:total_hours)
     assert_equal 154.25, assigns(:total_hours)
     # display all time by default

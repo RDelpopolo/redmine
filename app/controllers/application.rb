@@ -249,4 +249,9 @@ class ApplicationController < ActionController::Base
   def filename_for_content_disposition(name)
     request.env['HTTP_USER_AGENT'] =~ %r{MSIE} ? ERB::Util.url_encode(name) : name
   end
+  
+  def url_path(url_parameters)
+    rs = ::ActionController::Routing::Routes
+    rs.generate url_parameters
+  end
 end

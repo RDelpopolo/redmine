@@ -65,6 +65,21 @@ class Test::Unit::TestCase
     Attachment.storage_path = "#{RAILS_ROOT}/tmp/test/attachments"
   end
   
+  def assert_error_on(object, field)
+    object.valid?
+    assert object.errors.on(field), "expected error on #{field} attribute"
+  end
+
+  def assert_no_error_on(object, field)
+    object.valid?
+    assert !object.errors.on(field), "expected no error on #{field} attribute"
+  end
+
+  def assert_no_errors(object, options = {})
+    object.valid? if options[:validate]
+    assert_equal [], object.errors.full_messages
+  end
+  
   def with_settings(options, &block)
     saved_settings = options.keys.inject({}) {|h, k| h[k] = Setting[k].dup; h}
     options.each {|k, v| Setting[k] = v}

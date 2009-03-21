@@ -281,6 +281,11 @@ class Issue < ActiveRecord::Base
     "#{tracker} ##{id}: #{subject}"
   end
   
+  def time_entry_in_progress(user = nil)
+    TimeEntry.find_by_issue_id(self.id,  
+        :conditions => 'start_time IS NOT NULL and hours IS NULL' + (user ? " and user_id = #{user.id}" : ''))
+  end
+  
   private
   
   # Callback on attachment deletion
